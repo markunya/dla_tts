@@ -1,5 +1,2 @@
-from src.model.baseline_model import BaselineModel
-
-__all__ = [
-    "BaselineModel",
-]
+from src.model.hifigan.generator import HifiGenerator
+from src.model.hifigan.discriminator import HifiDiscriminator

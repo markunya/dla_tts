@@ -1,0 +1,24 @@
+defaults:
+  - models: hifigan
+  - writer: cometml
+  - metrics: default
+  - datasets: train
+  - dataloader: bs32
+  - transforms: only_peak_normalization
+  - mel: mel
+  - _self_
+
+trainer:
+  log_step: 50
+  n_epochs: 100
+  epoch_len: 500
+  device_tensors: ["wav"]
+  resume_from: null
+  device: auto
+  override: False
+  sr: 22050
+  examples_to_log_on_val: 5
+  save_period: 1
+  early_stop: ${trainer.n_epochs}
+  save_dir: "saved"
+  seed: 1

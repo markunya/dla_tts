@@ -1,1 +1,2 @@
-from src.metrics.example import ExampleMetric
+from src.metrics.audio_metric_wrapper import AudioMetricWrapper
+from src.metrics.dnsmos import DNSMosP835Metric

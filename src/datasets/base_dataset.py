@@ -3,6 +3,7 @@ import random
 from typing import List
 
 import torch
+import torchaudio
 from torch.utils.data import Dataset
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,12 @@ class BaseDataset(Dataset):
     """
 
     def __init__(
-        self, index, limit=None, shuffle_index=False, instance_transforms=None
+        self,
+        index,
+        segment_size=None,
+        limit=None,
+        shuffle_index=False,
+        instance_transforms=None
     ):
         """
         Args:
@@ -33,12 +39,26 @@ class BaseDataset(Dataset):
                 should be applied on the instance. Depend on the
                 tensor name.
         """
+        self.segment_size = segment_size
         self._assert_index_is_valid(index)
 
         index = self._shuffle_and_limit_index(index, limit, shuffle_index)
         self._index: List[dict] = index
 
         self.instance_transforms = instance_transforms
+
+    def _random_segment(self, wav):
+        if self.segment_size is None:
+            return wav
+        
+        if wav.size(1) >= self.segment_size:
+            max_audio_start = wav.size(1) - self.segment_size
+            audio_start = random.randint(0, max_audio_start)
+            wav = wav[:, audio_start:audio_start+self.segment_size]
+        else:
+            wav = torch.nn.functional.pad(wav, (0, self.segment_size - wav.size(1)), 'constant')
+        
+        return wav
 
     def __getitem__(self, ind):
         """
@@ -57,10 +77,13 @@ class BaseDataset(Dataset):
         """
         data_dict = self._index[ind]
         data_path = data_dict["path"]
-        data_object = self.load_object(data_path)
-        data_label = data_dict["label"]
+        wav, _ = torchaudio.load(data_path)
+        wav = self._random_segment(wav)
 
-        instance_data = {"data_object": data_object, "labels": data_label}
+        instance_data = {
+            "wav": wav,
+            **data_dict
+        }
         instance_data = self.preprocess_data(instance_data)
 
         return instance_data
@@ -70,18 +93,6 @@ class BaseDataset(Dataset):
         Get length of the dataset (length of the index).
         """
         return len(self._index)
-
-    def load_object(self, path):
-        """
-        Load object from disk.
-
-        Args:
-            path (str): path to the object.
-        Returns:
-            data_object (Tensor):
-        """
-        data_object = torch.load(path)
-        return data_object
 
     def preprocess_data(self, instance_data):
         """
@@ -142,9 +153,13 @@ class BaseDataset(Dataset):
             assert "path" in entry, (
                 "Each dataset item should include field 'path'" " - path to audio file."
             )
-            assert "label" in entry, (
-                "Each dataset item should include field 'label'"
-                " - object ground-truth label."
+            assert "text" in entry, (
+                "Each dataset item should include field 'text'"
+                " - object ground-truth text."
+            )
+            assert "duration" in entry, (
+                "Each dataset item should include field 'duration'"
+                " - object ground-truth duration."
             )
 
     @staticmethod

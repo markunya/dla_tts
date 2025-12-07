@@ -82,6 +82,7 @@ def get_dataloaders(config, device):
             drop_last=(dataset_partition == "train"),
             shuffle=(dataset_partition == "train"),
             worker_init_fn=set_worker_seed,
+            batch_size=1 if dataset_partition != "train" else config.dataloader.batch_size,
         )
         dataloaders[dataset_partition] = partition_dataloader
 

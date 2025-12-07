@@ -1,0 +1,11 @@
+train:
+  _target_: src.datasets.LJSpeech
+  partition: 'train'
+  data_dir: 'data'
+  segment_size: 8192
+  instance_transforms: ${transforms.instance_transforms.train}
+val:
+  _target_: src.datasets.LJSpeech
+  partition: 'val'
+  data_dir: 'data'
+  instance_transforms: ${transforms.instance_transforms.inference}
