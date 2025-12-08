@@ -1,8 +1,8 @@
 device: "auto"
 train: []
 inference:
-  - _target_: src.metrics.DNSMosP835Metric
-    name: "dnsmos"
+  - _target_: src.metrics.MOSNet
+    name: "mosnet"
   - _target_: src.metrics.AudioMetricWrapper
     metric:
       _target_: torchmetrics.audio.ScaleInvariantSignalNoiseRatio

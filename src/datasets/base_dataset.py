@@ -49,6 +49,10 @@ class BaseDataset(Dataset):
 
     def _random_segment(self, wav):
         if self.segment_size is None:
+            remainder = wav.size(1) % 256
+            if remainder != 0:
+                pad_len = 256 - remainder
+                wav = torch.nn.functional.pad(wav, (0, pad_len), 'constant')
             return wav
         
         if wav.size(1) >= self.segment_size:
@@ -109,10 +113,16 @@ class BaseDataset(Dataset):
                 instance transform).
         """
         if self.instance_transforms is not None:
-            for transform_name in self.instance_transforms.keys():
-                instance_data[transform_name] = self.instance_transforms[
-                    transform_name
-                ](instance_data[transform_name])
+            for key_to_apply_transform in self.instance_transforms.keys():
+                if key_to_apply_transform == "whole_item":
+                    instance_data = self.instance_transforms[key_to_apply_transform](
+                        instance_data
+                    )
+                else:
+                    instance_data[key_to_apply_transform] = self.instance_transforms[
+                        key_to_apply_transform
+                    ](instance_data[key_to_apply_transform])
+
         return instance_data
 
     @staticmethod

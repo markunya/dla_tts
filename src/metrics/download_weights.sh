@@ -3,6 +3,10 @@
 WEIGHTS_DIR="weights"
 mkdir ./${WEIGHTS_DIR}
 
+WAV2VEC_WEIGHTS="https://zenodo.org/record/6201162/files/wav2vec2.ckpt?download=1"
+# Скачивание wave2vec2 чекпоинта для MOSNET
+wget -nc ${WAV2VEC_WEIGHTS} -O "${WEIGHTS_DIR}/wave2vec2mos.pth"
+
 # DNSMOS: основная модель SIG/BAK/OVRL
 DNSMOS_SIG_BAK_OVR="https://raw.githubusercontent.com/microsoft/DNS-Challenge/master/DNSMOS/DNSMOS/sig_bak_ovr.onnx"
 wget -nc "${DNSMOS_SIG_BAK_OVR}" -O "${WEIGHTS_DIR}/sig_bak_ovr.onnx"

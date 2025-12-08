@@ -48,12 +48,6 @@ class BaseTrainer(ABC):
             self.device = config.trainer.device
         self.skip_oom = skip_oom
 
-        self._setup_models()
-        self._setup_losses()
-        self._setup_optimizers()
-        self._setup_lr_schedulers()
-        self._load_checkpoints()
-
         dataloaders, self.batch_transforms = get_dataloaders(config, self.device)
 
         self.logger = logger
@@ -97,10 +91,19 @@ class BaseTrainer(ABC):
 
         self.writer = writer
 
+        self.checkpoint_dir = (
+            ROOT_PATH / config.trainer.save_dir / config.writer.run_name
+        )
+
+        self._setup_models()
+        self._setup_losses()
+        self._setup_optimizers()
+        self._load_checkpoints()
+
         self.metrics = instantiate(config.metrics)
         self.train_metrics = MetricTracker(
             *self.config.writer.loss_names,
-            "grad_norm",
+            *[f"{model_name}_grad_norm" for model_name in self.models.keys()],
             *[m.name for m in self.metrics["train"]],
             writer=self.writer,
         )
@@ -108,10 +111,6 @@ class BaseTrainer(ABC):
             *self.config.writer.loss_names,
             *[m.name for m in self.metrics["inference"]],
             writer=self.writer,
-        )
-
-        self.checkpoint_dir = (
-            ROOT_PATH / config.trainer.save_dir / config.writer.run_name
         )
 
         mel_conf: MelSpectrogramConfig = instantiate(config.mel)
@@ -124,29 +123,37 @@ class BaseTrainer(ABC):
     def _setup_models(self):
         self.models = {}
         for model_name, model_config in self.config.models.items():
-            self.models[model_name] = instantiate(model_config.model)
+            if model_name == 'defaults': continue
+            self.models[model_name] = instantiate(model_config.model).to(self.device)
         self.logger.info(f'Models successfully initialized: {list(self.models.keys())}')
     
     def _setup_losses(self):
         self.loss_builders = {}
         for model_name, model_config in self.config.models.items():
+            if model_name == 'defaults': continue
             self.loss_builders[model_name] = LossBuilder(instantiate(model_config.losses))
         self.logger.info('Losses successfuly initialized')
     
     def _setup_optimizers(self):
         self.optimizers = {}
+        self.lr_schedulers = {}
+
         for model_name, model_config in self.config.models.items():
-            self.optimizers[model_name] = instantiate(model_config.optimizer)
+            model = self.models[model_name]
+
+            opt_cfg = model_config.optimizer
+            sch_cfg = model_config.scheduler
+
+            optimizer = instantiate(opt_cfg, params=model.parameters())
+            scheduler = instantiate(sch_cfg, optimizer=optimizer)
+
+            self.optimizers[model_name] = optimizer
+            self.lr_schedulers[model_name] = scheduler
         self.logger.info('Optimizers and schedulers successfully initialized')
     
-    def _setup_lr_schedulers(self):
-        self.lr_schedulers = {}
-        for model_name, model_config in self.config.models.items():
-            self.lr_schedulers[model_name] = instantiate(model_config.lr_scheduler)
-        self.logger.info('Lr schedulers and schedulers successfully initialized')
 
     def _step_lr_schedulers(self):
-        for _, lr_scheduler in self.lr_schedulers:
+        for _, lr_scheduler in self.lr_schedulers.items():
             lr_scheduler.step()
 
     def train(self):
@@ -215,7 +222,7 @@ class BaseTrainer(ABC):
                             epoch,
                             self._progress(batch_idx),
                             model_name,
-                            batch[f"{model_name}_loss"]
+                            batch[f"{model_name}_total_loss"]
                         )
                     )
 
@@ -226,11 +233,13 @@ class BaseTrainer(ABC):
                     )
 
                 self._log_scalars(self.train_metrics)
-                self._log_batch(batch_idx, batch)
+                # self._log_batch(batch)
 
                 last_train_metrics = self.train_metrics.result()
                 self.train_metrics.reset()
+
             if batch_idx + 1 >= self.epoch_len:
+                self._step_lr_schedulers()
                 break
 
         logs = last_train_metrics
@@ -266,9 +275,7 @@ class BaseTrainer(ABC):
                 )
             self.writer.set_step(epoch * self.epoch_len, part)
             self._log_scalars(self.evaluation_metrics)
-            self._log_batch(
-                batch_idx, batch, part
-            )
+            self._log_batch(batch)
 
         return self.evaluation_metrics.result()
 
@@ -351,7 +358,7 @@ class BaseTrainer(ABC):
         return base.format(current, total, 100.0 * current / total)
 
     @abstractmethod
-    def _log_batch(self, batch_idx, batch, mode="train"):
+    def _log_batch(self, batch):
         raise NotImplementedError
     
     @abstractmethod
@@ -383,8 +390,10 @@ class BaseTrainer(ABC):
 
         if only_best and not save_best:
             self.logger.warning(
-                "only_best=True, но save_best=False — сохраняется только обычный checkpoint."
+                "only_best=True, но save_best=False — включаю save_best=True, "
+                "так как иначе модель вообще не будет сохранена."
             )
+            save_best = True
 
         if not only_best:
             torch.save(state, filename)
@@ -436,6 +445,8 @@ class BaseTrainer(ABC):
 
     def _load_checkpoints(self):
         for model_name, model_config in self.config.models.items():
+            if model_name == 'defaults': continue
+            if 'checkpoint_path' not in model_config or model_config.checkpoint_path is None: continue
             self._load_checkpoint(model_name, model_config.checkpoint_path)
 
     def _save_checkpoints(self, epoch, save_best=False, only_best=False):

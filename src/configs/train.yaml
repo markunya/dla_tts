@@ -5,20 +5,22 @@ defaults:
   - datasets: train
   - dataloader: bs32
   - transforms: only_peak_normalization
-  - mel: mel
+  - mel: default
+  - optimizers: adamw_lr2e-4
+  - schedulers: exp_0.999
   - _self_
 
 trainer:
-  log_step: 50
+  log_step: 100
   n_epochs: 100
-  epoch_len: 500
+  epoch_len: 1000
   device_tensors: ["wav"]
   resume_from: null
   device: auto
-  override: False
+  override: True
   sr: 22050
   examples_to_log_on_val: 5
-  save_period: 1
+  save_period: 5
   early_stop: ${trainer.n_epochs}
   save_dir: "saved"
   seed: 1

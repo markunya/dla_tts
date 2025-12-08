@@ -9,7 +9,7 @@ import librosa
 
 @dataclass
 class MelSpectrogramConfig:
-    sr: int = 22000
+    sr: int = 22050
     win_length: int = 1024
     hop_length: int = 256
     n_fft: int = 1024
@@ -48,6 +48,9 @@ class MelSpectrogram(nn.Module):
         self.mel_spectrogram.mel_scale.fb.copy_(torch.tensor(mel_basis))
 
     def forward(self, wav: torch.Tensor) -> torch.Tensor:
+        if self.mel_spectrogram.mel_scale.fb.device != wav.device:
+            self.mel_spectrogram = self.mel_spectrogram.to(wav.device)
+        
         wav = torch.nn.functional.pad(
             wav,
             (

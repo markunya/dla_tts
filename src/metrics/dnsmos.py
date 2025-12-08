@@ -6,8 +6,8 @@ class DNSMosP835Metric(BaseMetric):
     def __init__(self, name, sr=22050):
         super().__init__(name)
         self.predictor = DNSMOSPredictor(
-            'metrics/weights/sig_bak_ovr.onnx',
-            'metrics/weights/model_v8.onnx'
+            'src/metrics/weights/sig_bak_ovr.onnx',
+            'src/metrics/weights/model_v8.onnx'
         )
         self.sr = sr
     

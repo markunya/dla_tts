@@ -1,5 +1,7 @@
 import numpy as np
 import librosa
+import torch
+import torchaudio
 import onnxruntime as ort
 
 class DNSMOSPredictor:
@@ -34,10 +36,30 @@ class DNSMOSPredictor:
 
     def __call__(self, aud, input_fs, is_personalized_MOS):
         fs = self.sampling_rate
+
         if input_fs != fs:
-            audio = librosa.resample(aud, orig_sr=input_fs, target_sr=fs)
+            aud_torch = torch.from_numpy(aud).float()
+
+            single = False
+            if aud_torch.dim() == 1:
+                aud_torch = aud_torch.unsqueeze(0)
+                single = True
+
+            resampler = torchaudio.transforms.Resample(
+                orig_freq=input_fs,
+                new_freq=fs,
+                resampling_method="sinc_interpolation"
+            )
+
+            audio_torch = resampler(aud_torch)
+
+            if single:
+                audio_torch = audio_torch.squeeze(0)
+
+            audio = audio_torch.cpu().numpy()
         else:
             audio = aud
+
         actual_audio_len = len(audio)
         len_samples = int(self.input_length*fs)
         while len(audio) < len_samples:

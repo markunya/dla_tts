@@ -11,8 +11,8 @@ class LossBuilder:
 
         for loss in self.losses:
             loss_value = loss(**kwargs)
-            loss_dict[loss.tag] = loss_value.item()
+            loss_dict[loss.tag] = loss_value
             total_loss += loss.coef * loss_value
 
-        loss_dict['total_loss'] = total_loss.item()
+        loss_dict['total_loss'] = total_loss
         return total_loss, loss_dict

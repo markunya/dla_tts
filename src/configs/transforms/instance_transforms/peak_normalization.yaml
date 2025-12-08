@@ -1,0 +1,10 @@
+train:
+  whole_item:
+    _target_: torchvision.transforms.v2.Compose
+    transforms:
+      - _target_: src.transforms.PeakNormalization
+inference:
+  whole_item:
+    _target_: torchvision.transforms.v2.Compose
+    transforms:
+      - _target_: src.transforms.PeakNormalization
