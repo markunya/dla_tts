@@ -116,3 +116,5 @@ __MACOSX/
 
 
 tester.ipynb
+*.sbatch
+tts_data

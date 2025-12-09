@@ -98,5 +98,4 @@ class GanTrainer(BaseTrainer):
             self.writer.add_image(
                 f"{mel_name}_{i+1}",
                 mel_for_writer,
-                step=self.step,
             )

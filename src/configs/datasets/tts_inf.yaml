@@ -1,0 +1,3 @@
+inf:
+  _target_: src.datasets.CustomDirDataset
+  root_dir: 'assets/lj_texts'

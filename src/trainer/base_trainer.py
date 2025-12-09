@@ -125,7 +125,8 @@ class BaseTrainer(ABC):
         for model_name, model_config in self.config.models.items():
             if model_name == 'defaults': continue
             self.models[model_name] = instantiate(model_config.model).to(self.device)
-        self.logger.info(f'Models successfully initialized: {list(self.models.keys())}')
+        if hasattr(self, 'logger'):
+            self.logger.info(f'Models successfully initialized: {list(self.models.keys())}')
     
     def _setup_losses(self):
         self.loss_builders = {}
@@ -181,7 +182,7 @@ class BaseTrainer(ABC):
             )
 
             if epoch % self.save_period == 0 or best:
-                self._save_checkpoints(epoch, save_best=best, only_best=True)
+                self._save_checkpoints(epoch, save_best=best)
 
             if stop_process:
                 break
@@ -357,7 +358,6 @@ class BaseTrainer(ABC):
             total = self.epoch_len
         return base.format(current, total, 100.0 * current / total)
 
-    @abstractmethod
     def _log_batch(self, batch):
         raise NotImplementedError
     

@@ -1,1 +1,2 @@
 from src.datasets.ljspeech_dataset import LJSpeech
+from src.datasets.custom_dir_dataset import CustomDirDataset

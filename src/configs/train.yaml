@@ -1,7 +1,7 @@
 defaults:
   - models: hifigan
   - writer: cometml
-  - metrics: default
+  - metrics: gt_required
   - datasets: train
   - dataloader: bs32
   - transforms: only_peak_normalization
