@@ -142,4 +142,7 @@ class TTSInferencer(BaseTrainer):
                     metrics=self.evaluation_metrics,
                 )
 
+        if self.save_dir is not None:
+            print(f'Wavs saved to {self.save_dir}')
+
         return self.evaluation_metrics.result()
