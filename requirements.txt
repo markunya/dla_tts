@@ -1,4 +1,5 @@
 comet_ml==3.54.2
+deep-phonemizer==0.0.19
 hydra-core
 librosa
 matplotlib==3.10.7
@@ -7,6 +8,7 @@ omegaconf==2.3.0
 onnxruntime
 pandas==2.3.3
 Pillow==12.0.0
+pytorch-lightning==2.6.0
 torch==2.2.0
 torchaudio==2.2.0
 torchvision==0.17.0
@@ -14,3 +16,4 @@ torchmetrics==1.8.2
 tqdm==4.67.1
 transformers==4.48.1
 wget==3.2
+yadisk
