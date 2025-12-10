@@ -41,6 +41,8 @@ bash src/metrics/download_weights.sh
 
 В файле `analysis.ipynb` представлен сравнительный анализ сгенерированных аудиосэмплов.
 
+[![Открыть в Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/markunya/dla_tts/blob/main/analysis.ipynb)
+
 ---
 
 ## Demo Notebook
@@ -50,3 +52,5 @@ bash src/metrics/download_weights.sh
 * выполнение инференса на тестовом наборе;
 * вычисление метрик качества;
 * подключение пользовательского датасета через ссылку на Yandex Drive.
+
+[![Открыть в Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/markunya/dla_tts/blob/main/demo.ipynb)
